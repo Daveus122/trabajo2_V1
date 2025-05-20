@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recordatorios</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lista de Recordatorios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f4f6f9;
@@ -22,11 +22,6 @@
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 30px;
-        }
-
-        h3 {
-            margin-top: 40px;
-            color: #34495e;
         }
 
         .reminder {
@@ -50,85 +45,109 @@
         .reminder-actions {
             margin-top: 15px;
         }
-
-        .form-label {
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background-color: #0d6efd;
-            border: none;
-        }
-
-        .btn-warning {
-            color: white;
-        }
-
-        .form-check-label {
-            margin-left: 5px;
-        }
-
-        .alert {
-            border-radius: 8px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📝 Lista de Recordatorios</h1>
+<div class="container">
+    <h1>📝 Lista de Recordatorios</h1>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="post" action="{% url 'reminder_list' %}" class="card p-4 shadow-sm mb-4">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="content" class="form-label">Escribe tu recordatorio:</label>
-                {{ form.content }}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="mb-3 form-check">
-                {{ form.important }}
-                <label for="important" class="form-check-label">Es importante</label>
-            </div>
-            <button type="submit" class="btn btn-primary">Agregar</button>
-        </form>
+        {% endfor %}
+    {% endif %}
 
-        <h3>Mis Recordatorios</h3>
-        {% if reminders %}
-            {% for reminder in reminders %}
-                <div class="reminder {% if reminder.important %}important{% endif %}">
-                    <p><strong>ID:</strong> {{ reminder.id }}</p>
-                    <p><strong>Recordatorio:</strong> {{ reminder.content }}</p>
-                    <p><strong>Fecha:</strong> {{ reminder.created_at|date:"d/m/Y H:i" }}</p>
-                    <p><strong>Importante:</strong> {% if reminder.important %}Sí{% else %}No{% endif %}</p>
-                    <div class="reminder-actions">
-                        <a href="{% url 'update_reminder' reminder.id %}" class="btn btn-warning me-2">Actualizar</a>
-                        <a href="{% url 'delete_reminder' reminder.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro?')">Borrar</a>
-                    </div>
+    <form method="post" action="{% url 'reminder_list' %}" class="card p-4 shadow-sm mb-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="content" class="form-label">Escribe tu recordatorio:</label>
+            {{ form.content }}
+        </div>
+        <div class="mb-3 form-check">
+            {{ form.important }}
+            <label for="important" class="form-check-label">Es importante</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar</button>
+    </form>
+
+    <h3>Mis Recordatorios</h3>
+    {% if reminders %}
+        {% for reminder in reminders %}
+            <div class="reminder {% if reminder.important %}important{% endif %}">
+                <p><strong>ID:</strong> {{ reminder.id }}</p>
+                <p><strong>Recordatorio:</strong> {{ reminder.content }}</p>
+                <p><strong>Fecha:</strong> {{ reminder.created_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Importante:</strong> {% if reminder.important %}Sí{% else %}No{% endif %}</p>
+                <div class="reminder-actions">
+                    <a href="{% url 'update_reminder' reminder.id %}" class="btn btn-warning me-2">Actualizar</a>
+                    <button
+                        type="button"
+                        class="btn btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteModal"
+                        data-pk="{{ reminder.id }}"
+                        data-content="{{ reminder.content }}"
+                    >
+                        Borrar
+                    </button>
                 </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-muted">No tienes recordatorios. ¡Agrega uno!</p>
-        {% endif %}
-    </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No tienes recordatorios. ¡Agrega uno!</p>
+    {% endif %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 3000);
-            });
+<!-- Modal Confirmación -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="deleteForm">
+        {% csrf_token %}
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmDeleteLabel">Confirmar eliminación</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            ¿Estás seguro que quieres eliminar el recordatorio: <strong id="modalReminderContent"></strong>?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    const modalReminderContent = document.getElementById('modalReminderContent');
+    const deleteForm = document.getElementById('deleteForm');
+
+    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const pk = button.getAttribute('data-pk');
+        const content = button.getAttribute('data-content');
+
+        modalReminderContent.textContent = content;
+        deleteForm.action = `/api/reminders/delete/${pk}/`;
+    });
+
+    // Opcional: auto cerrar alerts
+    document.addEventListener('DOMContentLoaded', function () {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 3000);
         });
-    </script>
+    });
+</script>
 </body>
 </html>
